@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Сравнение пользователей{% endblock %}
+{% block content %}
+<h1 class="h4 fw-semibold mb-3">Сравнение пользователей</h1>
+<p class="text-white-50 mb-4">Выберите пользователей, чтобы посмотреть их активность и точки совпадения. Часовой пояс: {{ timezone_name }}</p>
+
+<div class="card bg-dark bg-opacity-25 border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-12 col-lg-8">
+        <label class="form-label text-white-50">Пользователи</label>
+        <select class="form-select" name="user_id" multiple size="6">
+          {% for user in all_users %}
+            <option value="{{ user.id }}" {% if user.id in selected_ids %}selected{% endif %}>@{{ user.username }}</option>
+          {% endfor %}
+        </select>
+        <small class="text-white-50">Удерживайте Ctrl (Cmd на Mac), чтобы выбрать несколько строк.</small>
+      </div>
+      <div class="col-12 col-lg-4">
+        <button class="btn btn-primary w-100" type="submit"><i class="bi bi-graph-up"></i> Построить график</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if selected_ids %}
+  <div class="card bg-dark bg-opacity-25 border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <h5 class="card-title mb-3"><i class="bi bi-activity me-2"></i>Сводная активность</h5>
+      <canvas id="compareChart" height="160"></canvas>
+    </div>
+  </div>
+
+  <div class="card bg-dark bg-opacity-25 border-0 shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title mb-3"><i class="bi bi-intersect me-2"></i>Совпадения онлайн-статусов</h5>
+      {% if overlap_times %}
+        <ul class="list-group list-group-flush">
+          {% for item in overlap_times %}
+            <li class="list-group-item bg-transparent text-white d-flex justify-content-between align-items-center">
+              <span><i class="bi bi-clock-history me-2"></i>{{ item.ts }}</span>
+              <span class="badge bg-success">Все выбранные</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-white-50 mb-0">Совпадений онлайн-статусов пока не найдено.</p>
+      {% endif %}
+    </div>
+  </div>
+{% else %}
+  <div class="alert alert-info">Выберите минимум двух пользователей, чтобы построить аналитику.</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+{% if selected_ids %}
+<script>
+  const datasets = {{ chart_data | safe }};
+  const ctx = document.getElementById('compareChart');
+  if (Array.isArray(datasets) && ctx) {
+    const palette = [
+      '#4caf50', '#03a9f4', '#ff9800', '#e91e63', '#9c27b0', '#00bcd4', '#8bc34a', '#ffc107'
+    ];
+    const chartDatasets = datasets.map((item, index) => ({
+      label: item.label,
+      data: item.data,
+      borderColor: palette[index % palette.length],
+      backgroundColor: palette[index % palette.length] + '33',
+      stepped: true,
+      fill: true,
+      pointRadius: 2
+    }));
+    new Chart(ctx, {
+      type: 'line',
+      data: { datasets: chartDatasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            type: 'time',
+            time: { tooltipFormat: 'dd.MM.yyyy HH:mm' },
+            ticks: { color: '#ced4da' },
+            grid: { color: 'rgba(255,255,255,0.12)' }
+          },
+          y: {
+            suggestedMin: 0,
+            suggestedMax: 1,
+            ticks: {
+              callback: value => value === 1 ? 'Онлайн' : 'Оффлайн',
+              stepSize: 1,
+              color: '#ced4da'
+            },
+            grid: { color: 'rgba(255,255,255,0.12)' }
+          }
+        },
+        plugins: {
+          legend: { labels: { color: '#f8f9fa' } },
+          tooltip: {
+            callbacks: {
+              label: ctx => `${ctx.dataset.label}: ${ctx.raw.status}`
+            }
+          }
+        }
+      }
+    });
+  }
+</script>
+{% endif %}
+{% endblock %}
