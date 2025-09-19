@@ -60,12 +60,12 @@
       <div class="card-body">
         <h5 class="card-title mb-3"><i class="bi bi-telegram me-2"></i>Авторизация Telegram</h5>
         {% if stage == 'authorized' %}
-          <div class="alert alert-success text-dark">Статус: Авторизован ✅</div>
+          <div class="alert alert-success">Статус: Авторизован ✅</div>
           <form method="post" action="{{ url_for('http_logout') }}">
             <button class="btn btn-outline-danger w-100" type="submit"><i class="bi bi-box-arrow-right"></i> Разлогиниться</button>
           </form>
         {% elif stage == 'code' %}
-          <div class="alert alert-warning text-dark">Статус: Ожидается код из Telegram</div>
+          <div class="alert alert-warning">Статус: Ожидается код из Telegram</div>
           <form method="post" action="{{ url_for('http_send_code') }}" class="d-grid gap-2 mb-3">
             <button class="btn btn-outline-light" type="submit"><i class="bi bi-send"></i> Отправить код ещё раз</button>
           </form>

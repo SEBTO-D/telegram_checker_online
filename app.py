@@ -180,7 +180,7 @@ async def worker_loop():
                     )
                 )
                 db.session.commit()
-                print(f"[{datetime.utcnow()}] {u.username}: {st_text}")
+                print(f"[{datetime.now(dt_timezone.utc)}] {u.username}: {st_text}")
         await asyncio.sleep(interval)
 
 # run coroutine safely on tele_loop

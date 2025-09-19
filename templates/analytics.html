@@ -68,9 +68,12 @@
       data: item.data,
       borderColor: palette[index % palette.length],
       backgroundColor: palette[index % palette.length] + '33',
+      parsing: { xAxisKey: 'x', yAxisKey: 'y' },
       stepped: true,
       fill: true,
-      pointRadius: 2
+      pointRadius: 2,
+      tension: 0,
+      borderWidth: 2
     }));
     new Chart(ctx, {
       type: 'line',
@@ -86,8 +89,8 @@
             grid: { color: 'rgba(255,255,255,0.12)' }
           },
           y: {
-            suggestedMin: 0,
-            suggestedMax: 1,
+            min: 0,
+            max: 1,
             ticks: {
               callback: value => value === 1 ? 'Онлайн' : 'Оффлайн',
               stepSize: 1,
