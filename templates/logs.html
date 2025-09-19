@@ -76,10 +76,12 @@
           data: chartSource.data,
           borderColor: palette.line,
           backgroundColor: palette.background,
+          parsing: { xAxisKey: 'x', yAxisKey: 'y' },
           fill: true,
           stepped: true,
-          tension: 0.3,
-          pointRadius: 3
+          tension: 0,
+          pointRadius: 3,
+          borderWidth: 2
         }]
       },
       options: {
@@ -93,8 +95,8 @@
             grid: { color: 'rgba(255,255,255,0.1)' }
           },
           y: {
-            suggestedMin: 0,
-            suggestedMax: 1,
+            min: 0,
+            max: 1,
             ticks: {
               callback: value => value === 1 ? 'Онлайн' : 'Оффлайн',
               stepSize: 1,
