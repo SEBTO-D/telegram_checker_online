@@ -14,6 +14,8 @@ class Log(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     ts = db.Column(db.DateTime(timezone=True), server_default=func.now())
     status = db.Column(db.String(255))
+    status_code = db.Column(db.String(32))
+    was_online_at = db.Column(db.DateTime(timezone=True))
 
 class Config(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -1,47 +1,100 @@
-{% extends "base.html" %}{% block content %}
-<h3>Настройки</h3>
-<form method="post">
-  <input type="hidden" name="form" value="cfg">
-  <table class="table table-sm"><thead><tr><th>Ключ</th><th>Значение</th></tr></thead><tbody>
-  {% for k in keys %}
-    <tr>
-      <td><code>{{k}}</code></td>
-      <td>
-        {% set type = 'password' if ('PASS' in k or 'HASH' in k or 'SECRET' in k) else 'text' %}
-        <input class="form-control" type="{{type}}" name="{{k}}" value="{{cfg.get(k,'')}}">
-      </td>
-    </tr>
-  {% endfor %}
-  </tbody></table>
-  <button class="btn btn-primary">Сохранить</button>
-</form>
+{% extends "base.html" %}
+{% block title %}Настройки{% endblock %}
+{% block content %}
+<h1 class="h4 fw-semibold mb-4">Настройки системы</h1>
 
-<hr>
-<h4>Авторизация Telegram</h4>
-{% if stage == 'authorized' %}
-  <div class="alert alert-success">Статус: Авторизован ✅</div>
-  <form method="post" action="/auth/logout">
-    <button class="btn btn-outline-danger">Разлогиниться</button>
-  </form>
-{% elif stage == 'code' %}
-  <div class="alert alert-warning">Статус: Ожидается код из Telegram</div>
-  <form method="post" action="/auth/send_code" class="mb-2">
-    <button class="btn btn-outline-secondary">Отправить код ещё раз</button>
-  </form>
-  <form method="post" action="/auth/submit_code" class="row g-2">
-    <div class="col-auto"><input class="form-control" name="code" placeholder="Код"></div>
-    <div class="col-auto"><button class="btn btn-primary">Подтвердить</button></div>
-  </form>
-{% elif stage == 'password' %}
-  <div class="alert alert-info">Статус: Требуется пароль (2FA)</div>
-  <form method="post" action="/auth/submit_password" class="row g-2">
-    <div class="col-auto"><input class="form-control" type="password" name="password" placeholder="Пароль"></div>
-    <div class="col-auto"><button class="btn btn-primary">Войти</button></div>
-  </form>
-{% else %}
-  <div class="alert alert-secondary">Статус: Не авторизован</div>
-  <form method="post" action="/auth/send_code">
-    <button class="btn btn-primary">Отправить код</button>
-  </form>
-{% endif %}
+<div class="row g-4">
+  <div class="col-12 col-lg-7">
+    <div class="card bg-dark bg-opacity-25 border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h5 class="card-title mb-3"><i class="bi bi-sliders me-2"></i>Основные параметры</h5>
+        <form method="post">
+          <input type="hidden" name="form" value="cfg">
+          <div class="table-responsive">
+            <table class="table table-dark-glass align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Ключ</th>
+                  <th>Значение</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for k in keys %}
+                  <tr>
+                    <td class="text-white-50"><code>{{ k }}</code></td>
+                    <td>
+                      {% set type = 'password' if ('PASS' in k or 'HASH' in k or 'SECRET' in k) else 'text' %}
+                      <input class="form-control" type="{{ type }}" name="{{ k }}" value="{{ cfg.get(k,'') }}">
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="text-end mt-3">
+            <button class="btn btn-success" type="submit"><i class="bi bi-save"></i> Сохранить</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-5 d-flex flex-column gap-4">
+    <div class="card bg-dark bg-opacity-25 border-0 shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title mb-3"><i class="bi bi-globe me-2"></i>Часовой пояс отображения</h5>
+        <form method="post" action="{{ url_for('update_timezone') }}" class="d-grid gap-3">
+          <div>
+            <label class="form-label text-white-50">Выберите таймзону</label>
+            <select name="timezone" class="form-select" data-current="{{ timezone_name }}">
+              {% for tz in timezones %}
+                <option value="{{ tz }}" {% if tz == timezone_name %}selected{% endif %}>{{ tz }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button class="btn btn-outline-light" type="submit"><i class="bi bi-clock"></i> Обновить</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card bg-dark bg-opacity-25 border-0 shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title mb-3"><i class="bi bi-telegram me-2"></i>Авторизация Telegram</h5>
+        {% if stage == 'authorized' %}
+          <div class="alert alert-success text-dark">Статус: Авторизован ✅</div>
+          <form method="post" action="{{ url_for('http_logout') }}">
+            <button class="btn btn-outline-danger w-100" type="submit"><i class="bi bi-box-arrow-right"></i> Разлогиниться</button>
+          </form>
+        {% elif stage == 'code' %}
+          <div class="alert alert-warning text-dark">Статус: Ожидается код из Telegram</div>
+          <form method="post" action="{{ url_for('http_send_code') }}" class="d-grid gap-2 mb-3">
+            <button class="btn btn-outline-light" type="submit"><i class="bi bi-send"></i> Отправить код ещё раз</button>
+          </form>
+          <form method="post" action="{{ url_for('http_submit_code') }}" class="row g-2">
+            <div class="col-8">
+              <input class="form-control" name="code" placeholder="Код">
+            </div>
+            <div class="col-4">
+              <button class="btn btn-primary w-100" type="submit">Подтвердить</button>
+            </div>
+          </form>
+        {% elif stage == 'password' %}
+          <div class="alert alert-info">Статус: Требуется пароль (2FA)</div>
+          <form method="post" action="{{ url_for('http_submit_password') }}" class="row g-2">
+            <div class="col-8">
+              <input class="form-control" type="password" name="password" placeholder="Пароль">
+            </div>
+            <div class="col-4">
+              <button class="btn btn-primary w-100" type="submit">Войти</button>
+            </div>
+          </form>
+        {% else %}
+          <div class="alert alert-secondary">Статус: Не авторизован</div>
+          <form method="post" action="{{ url_for('http_send_code') }}" class="d-grid gap-2">
+            <button class="btn btn-primary" type="submit"><i class="bi bi-send"></i> Отправить код</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

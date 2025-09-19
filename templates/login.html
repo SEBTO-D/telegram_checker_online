@@ -1,7 +1,48 @@
-<!doctype html><html><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head>
-<body class="container py-5" style="max-width:480px"><h3>Вход</h3>
-<form method="post"><input class="form-control mb-2" name="username" placeholder="Логин">
-<input type="password" class="form-control mb-2" name="password" placeholder="Пароль">
-<button class="btn btn-primary w-100">Войти</button></form></body></html>
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Вход · Telegram Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+      body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at top left, #2a5298 0%, #1e3c72 35%, #0f2027 100%);
+        color: #f8f9fa;
+      }
+      .login-card {
+        width: 100%;
+        max-width: 420px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 1.25rem;
+        padding: 2.5rem 2rem;
+        box-shadow: 0 1.5rem 3.5rem rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(14px);
+      }
+      .form-control, .btn {
+        border-radius: 0.75rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-card">
+      <h1 class="h3 fw-semibold text-center mb-4">Telegram Tracker</h1>
+      <form method="post" class="d-grid gap-3">
+        <div>
+          <label class="form-label text-white-50">Логин</label>
+          <input class="form-control" name="username" placeholder="Введите логин" required>
+        </div>
+        <div>
+          <label class="form-label text-white-50">Пароль</label>
+          <input type="password" class="form-control" name="password" placeholder="Введите пароль" required>
+        </div>
+        <button class="btn btn-success" type="submit">Войти</button>
+      </form>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
