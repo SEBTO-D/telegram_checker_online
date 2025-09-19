@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block content %}
+<h3>Пользователи</h3>
+<form method="post" action="/add" class="mb-3"><div class="input-group">
+<input name="username" class="form-control" placeholder="Ник">
+<button class="btn btn-primary">Добавить</button></div></form>
+<table class="table table-sm"><thead><tr><th>#</th><th>username</th><th>статус</th><th></th></tr></thead><tbody>
+{% for u in users %}
+<tr><td>{{loop.index}}</td><td>@{{u.username}}</td><td>{{ last_status.get(u.id,'—') }}</td>
+<td><a href="/logs/{{u.id}}" class="btn btn-sm btn-outline-secondary">Логи</a>
+<form method="post" action="/delete/{{u.id}}" style="display:inline"><button class="btn btn-sm btn-danger">Удалить</button></form></td></tr>
+{% endfor %}</tbody></table>
+<p class="text-muted">Интервал: {{interval}} сек.</p>{% endblock %}

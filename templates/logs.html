@@ -1,0 +1,5 @@
+{% extends "base.html" %}{% block content %}
+<a href="/" class="btn btn-link">←</a><h3>@{{user.username}}</h3>
+<table class="table table-sm"><thead><tr><th>#</th><th>Время</th><th>Статус</th></tr></thead><tbody>
+{% for l in logs %}<tr><td>{{loop.index}}</td><td>{{l.ts}}</td><td>{{l.status}}</td></tr>{% endfor %}</tbody></table>
+{% endblock %}
