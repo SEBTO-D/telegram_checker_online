@@ -24,7 +24,12 @@ from flask import (
 from pytz import common_timezones, timezone as pytz_timezone
 from sqlalchemy import inspect, text as sa_text
 from telethon import TelegramClient
-from telethon.errors import PhoneCodeExpiredError, PhoneCodeInvalidError, SessionPasswordNeededError
+from telethon.errors import (
+    FloodWaitError,
+    PhoneCodeExpiredError,
+    PhoneCodeInvalidError,
+    SessionPasswordNeededError,
+)
 from telethon.tl import types as tl_types
 
 from models import Config, Log, User, db
@@ -49,6 +54,8 @@ AVAILABLE_TIMEZONES = list(common_timezones)
 TIMEZONE_SET = set(AVAILABLE_TIMEZONES)
 
 AUTH_STAGE_KEY = "AUTH_STAGE"   # none | code | password | authorized
+LAST_CODE_SENT_KEY = "AUTH_LAST_CODE_AT"
+AUTH_STAGE_FLOW = ["none", "code", "password", "authorized"]
 
 def env_default_map():
     return {
@@ -63,6 +70,7 @@ def env_default_map():
         "FLASK_SECRET": os.environ.get("FLASK_SECRET","change_this_secret"),
         TIMEZONE_KEY: os.environ.get(TIMEZONE_KEY, "UTC"),
         AUTH_STAGE_KEY: "none",
+        LAST_CODE_SENT_KEY: "",
     }
 
 
@@ -259,11 +267,23 @@ async def do_sign_in_with_password(password):
         return False, f"Ошибка: {e}"
 
 async def do_send_code(phone):
+    if not phone:
+        return False, "Телефон не указан в настройках"
+    if client is None:
+        return False, "Клиент Telegram ещё запускается. Попробуйте повторить через несколько секунд."
     try:
+        if not client.is_connected():
+            await client.connect()
         await client.send_code_request(phone)
         with app.app_context():
             set_cfg(AUTH_STAGE_KEY, "code")
+            set_cfg(LAST_CODE_SENT_KEY, datetime.now(dt_timezone.utc).isoformat())
         return True, "Код отправлен"
+    except FloodWaitError as e:
+        wait_for = getattr(e, "seconds", None)
+        if wait_for is None:
+            return False, "Слишком частые запросы. Попробуйте позднее."
+        return False, f"Слишком частые запросы. Повторите через {int(wait_for)} с."
     except Exception as e:
         return False, f"Ошибка отправки кода: {e}"
 
@@ -439,7 +459,15 @@ def settings():
     stage = get_cfg(AUTH_STAGE_KEY,"none")
     cfg = {k:get_cfg(k,"") for k in EDITABLE_KEYS}
     timezone_name = get_cfg(TIMEZONE_KEY, "UTC")
+    tz = get_timezone_obj()
+    last_code_sent_iso = get_cfg(LAST_CODE_SENT_KEY, "")
+    last_code_sent = ""
+    if last_code_sent_iso:
+        formatted = format_dt(last_code_sent_iso, tz)
+        last_code_sent = formatted if formatted != "—" else ""
     sorted_timezones = sorted(AVAILABLE_TIMEZONES)
+    stage_flow = AUTH_STAGE_FLOW
+    stage_index = stage_flow.index(stage) if stage in stage_flow else 0
     return render_template(
         "settings.html",
         cfg=cfg,
@@ -447,6 +475,10 @@ def settings():
         stage=stage,
         timezone_name=timezone_name,
         timezones=sorted_timezones,
+        last_code_sent=last_code_sent,
+        last_code_sent_iso=last_code_sent_iso,
+        stage_flow=stage_flow,
+        stage_index=stage_index,
     )
 
 
@@ -466,6 +498,23 @@ def update_timezone():
 @login_required
 def http_send_code():
     phone = get_cfg("TG_PHONE","")
+    last_sent = get_cfg(LAST_CODE_SENT_KEY, "")
+    if last_sent:
+        try:
+            last_dt = datetime.fromisoformat(last_sent)
+            if last_dt.tzinfo is None:
+                last_dt = last_dt.replace(tzinfo=dt_timezone.utc)
+        except ValueError:
+            last_dt = None
+        if last_dt:
+            delta = datetime.now(dt_timezone.utc) - last_dt
+            wait_left = 30 - int(delta.total_seconds())
+            if wait_left > 0:
+                flash(
+                    f"Код уже отправляли недавно. Подождите ещё {wait_left} с, прежде чем повторить.",
+                    "warning",
+                )
+                return redirect(url_for("settings"))
     fut = run_coro(do_send_code(phone))
     ok, msg = fut.result()
     flash(msg if msg else ("OK" if ok else "Ошибка"), "info" if ok else "danger")
